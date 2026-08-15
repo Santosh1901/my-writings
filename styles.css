@@ -75,6 +75,11 @@ a:focus-visible {
   color: var(--muted);
 }
 
+.site-nav {
+  display: flex;
+  gap: 18px;
+}
+
 .site-nav a {
   color: var(--muted);
   text-decoration: none;
@@ -255,6 +260,84 @@ a:focus-visible {
 
 .cite figcaption a:hover {
   color: var(--ink);
+}
+
+.lede {
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+
+.auth-form,
+#note-form {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-form label,
+#note-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.auth-form input,
+#note-form input,
+#note-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+
+#note-form textarea {
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.auth-form button[type="submit"],
+#note-form button[type="submit"] {
+  justify-self: start;
+  padding: 10px 16px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.signed-in {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.text-btn {
+  margin-left: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.form-status {
+  color: var(--muted);
+}
+
+.form-status.is-error {
+  color: var(--mark);
 }
 
 .site-footer {

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Note — Santosh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=Source+Sans+3:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="site-header">
+        <a class="wordmark" href="index.html">
+          Santosh
+          <span>Writings</span>
+        </a>
+        <nav class="site-nav">
+          <a href="index.html">Index</a>
+          <a href="write.html">Write</a>
+        </nav>
+      </header>
+
+      <article id="article">
+        <p class="form-status">Loading…</p>
+      </article>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/notes.js"></script>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const slug = params.get("slug") || "";
+      const article = document.getElementById("article");
+
+      (async function () {
+        if (!slug) {
+          article.innerHTML = '<p class="form-status is-error">No note selected.</p>';
+          return;
+        }
+        const { data, error } = await Writings.getBySlug(slug);
+        if (error || !data) {
+          article.innerHTML =
+            '<p class="form-status is-error">Could not load this note.</p>';
+          return;
+        }
+        document.title = data.title + " — Santosh";
+        article.innerHTML =
+          '<header class="essay-header">' +
+          '<p class="kicker">' +
+          Writings.escapeHtml(data.kicker || "Note") +
+          "</p>" +
+          "<h1>" +
+          Writings.escapeHtml(data.title) +
+          "</h1>" +
+          "</header>" +
+          '<div class="prose">' +
+          data.body +
+          "</div>";
+      })();
+    </script>
+  </body>
+</html>

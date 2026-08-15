@@ -25,6 +25,7 @@
         </a>
         <nav class="site-nav">
           <a href="index.html" aria-current="page">Index</a>
+          <a href="write.html">Write</a>
         </nav>
       </header>
 
@@ -36,7 +37,9 @@
         </p>
       </section>
 
-      <div class="feed">
+      <div class="feed" id="live-feed"></div>
+
+      <div class="feed" id="static-feed">
         <a class="feature" href="eat-lunch.html">
           <p class="kicker">Note</p>
           <h2>Eat lunch. Go break your legs. Repeat.</h2>
@@ -150,5 +153,37 @@
 
       <footer class="site-footer">P. V. Santosh</footer>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/notes.js"></script>
+    <script>
+      (async function () {
+        const mount = document.getElementById("live-feed");
+        const { data, error } = await Writings.listPublished();
+        if (error || !data || !data.length) return;
+        mount.innerHTML = data
+          .map(function (note, index) {
+            const compact = index === 0 ? "" : " compact";
+            return (
+              '<a class="feature' +
+              compact +
+              '" href="note.html?slug=' +
+              encodeURIComponent(note.slug) +
+              '">' +
+              '<p class="kicker">' +
+              Writings.escapeHtml(note.kicker || "Note") +
+              "</p>" +
+              "<h2>" +
+              Writings.escapeHtml(note.title) +
+              "</h2>" +
+              "<p>" +
+              Writings.escapeHtml(note.excerpt || "") +
+              "</p>" +
+              '<span class="continue">Read the note</span></a>'
+            );
+          })
+          .join("");
+      })();
+    </script>
   </body>
 </html>

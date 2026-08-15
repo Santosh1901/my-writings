@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Write — Santosh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=Source+Sans+3:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="site-header">
+        <a class="wordmark" href="index.html">
+          Santosh
+          <span>Writings</span>
+        </a>
+        <nav class="site-nav">
+          <a href="index.html">Index</a>
+          <a href="write.html" aria-current="page">Write</a>
+        </nav>
+      </header>
+
+      <section class="essay-header">
+        <p class="kicker">Private</p>
+        <h1>Write a note</h1>
+      </section>
+
+      <p class="form-status" id="status" hidden></p>
+
+      <form class="auth-form" id="login-form">
+        <p class="lede">
+          This is only for you. Create an account once, then sign in to write.
+          Nobody else can save notes.
+        </p>
+        <label>
+          Email
+          <input type="email" name="email" required autocomplete="username" />
+        </label>
+        <label>
+          Password
+          <input
+            type="password"
+            name="password"
+            required
+            autocomplete="current-password"
+          />
+        </label>
+        <div class="form-actions">
+          <button type="submit">Sign in</button>
+          <button type="button" class="text-btn" id="create-account">
+            Create account
+          </button>
+        </div>
+      </form>
+
+      <div id="composer" hidden>
+        <p class="signed-in">
+          Signed in as <span id="who"></span>
+          <button type="button" class="text-btn" id="sign-out">Sign out</button>
+        </p>
+        <form id="note-form">
+          <label>
+            Title
+            <input type="text" name="title" required maxlength="140" />
+          </label>
+          <label>
+            Note
+            <textarea
+              name="body"
+              rows="16"
+              required
+              placeholder="Just start typing."
+            ></textarea>
+          </label>
+          <button type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/notes.js"></script>
+    <script>
+      const statusEl = document.getElementById("status");
+      const loginForm = document.getElementById("login-form");
+      const composer = document.getElementById("composer");
+      const who = document.getElementById("who");
+
+      function showStatus(message, isError) {
+        statusEl.hidden = !message;
+        statusEl.textContent = message || "";
+        statusEl.classList.toggle("is-error", Boolean(isError));
+      }
+
+      async function showSession() {
+        const sb = Writings.client();
+        if (!sb) {
+          showStatus("Could not reach Supabase.", true);
+          return;
+        }
+        const {
+          data: { session },
+        } = await sb.auth.getSession();
+        if (!session) {
+          loginForm.hidden = false;
+          composer.hidden = true;
+          return;
+        }
+        loginForm.hidden = true;
+        composer.hidden = false;
+        who.textContent = session.user.email || "you";
+      }
+
+      function creds() {
+        const form = new FormData(loginForm);
+        return {
+          email: String(form.get("email")),
+          password: String(form.get("password")),
+        };
+      }
+
+      loginForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const sb = Writings.client();
+        showStatus("Signing in…");
+        const { error } = await sb.auth.signInWithPassword(creds());
+        if (error) {
+          showStatus(error.message, true);
+          return;
+        }
+        showStatus("");
+        await showSession();
+      });
+
+      document
+        .getElementById("create-account")
+        .addEventListener("click", async function () {
+          const sb = Writings.client();
+          showStatus("Creating account…");
+          const { data, error } = await sb.auth.signUp(creds());
+          if (error) {
+            showStatus(error.message, true);
+            return;
+          }
+          if (data.session) {
+            showStatus("");
+            await showSession();
+            return;
+          }
+          showStatus(
+            "Account created. If it asks you to confirm email, turn off Confirm email in Supabase Auth settings, then sign in."
+          );
+        });
+
+      document.getElementById("sign-out").addEventListener("click", async function () {
+        const sb = Writings.client();
+        await sb.auth.signOut();
+        await showSession();
+      });
+
+      document.getElementById("note-form").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const sb = Writings.client();
+        const {
+          data: { user },
+        } = await sb.auth.getUser();
+        if (!user) {
+          showStatus("Sign in first.", true);
+          return;
+        }
+        const form = new FormData(event.target);
+        const title = String(form.get("title")).trim();
+        const raw = String(form.get("body"));
+        const body = Writings.textToHtml(raw);
+        const slugBase = Writings.slugify(title) || "note";
+        const slug = slugBase + "-" + Date.now().toString(36);
+        showStatus("Saving…");
+        const { error } = await sb.from("writings").insert({
+          author_id: user.id,
+          slug: slug,
+          title: title,
+          excerpt: Writings.excerptFrom(raw),
+          body: body,
+          published: true,
+        });
+        if (error) {
+          showStatus(
+            error.message +
+              (error.message.indexOf("writings") >= 0
+                ? " Run supabase/migrate-writings.sql in the Supabase SQL editor."
+                : ""),
+            true
+          );
+          return;
+        }
+        window.location.href = "note.html?slug=" + encodeURIComponent(slug);
+      });
+
+      showSession();
+    </script>
+  </body>
+</html>
