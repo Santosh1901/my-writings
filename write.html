@@ -28,7 +28,7 @@
 
       <section class="essay-header">
         <p class="kicker">Private</p>
-        <h1>Write a note</h1>
+        <h1 id="page-title">Write a note</h1>
       </section>
 
       <p class="form-status" id="status" hidden></p>
@@ -90,6 +90,8 @@
         statusEl.classList.toggle("is-error", Boolean(isError));
       }
 
+      const editSlug = new URLSearchParams(location.search).get("slug") || "";
+
       async function showSession() {
         const sb = Writings.client();
         if (!sb) {
@@ -99,7 +101,7 @@
         const {
           data: { session },
         } = await sb.auth.getSession();
-        if (!session) {
+        if (!session || !Writings.isOwner(session.user)) {
           loginForm.hidden = false;
           composer.hidden = true;
           return;
@@ -107,6 +109,20 @@
         loginForm.hidden = true;
         composer.hidden = false;
         who.textContent = session.user.email || "you";
+        if (editSlug) await loadNote(editSlug);
+      }
+
+      async function loadNote(slug) {
+        const { data, error } = await Writings.getBySlug(slug);
+        if (error || !data) {
+          showStatus("Could not load that note.", true);
+          return;
+        }
+        document.getElementById("page-title").textContent = "Edit note";
+        document.title = "Edit — Santosh";
+        const form = document.getElementById("note-form");
+        form.title.value = data.title;
+        form.body.value = Writings.htmlToText(data.body);
       }
 
       function creds() {
@@ -150,25 +166,27 @@
         const title = String(form.get("title")).trim();
         const raw = String(form.get("body"));
         const body = Writings.textToHtml(raw);
-        const slugBase = Writings.slugify(title) || "note";
-        const slug = slugBase + "-" + Date.now().toString(36);
-        showStatus("Saving…");
-        const { error } = await sb.from("writings").insert({
+        const payload = {
           author_id: user.id,
-          slug: slug,
           title: title,
           excerpt: Writings.excerptFrom(raw),
           body: body,
           published: true,
-        });
+        };
+        showStatus("Saving…");
+        let slug = editSlug;
+        let error;
+        if (editSlug) {
+          const updated = await sb.from("writings").update(payload).eq("slug", editSlug);
+          error = updated.error;
+        } else {
+          slug = (Writings.slugify(title) || "note") + "-" + Date.now().toString(36);
+          payload.slug = slug;
+          const inserted = await sb.from("writings").insert(payload);
+          error = inserted.error;
+        }
         if (error) {
-          showStatus(
-            error.message +
-              (error.message.indexOf("writings") >= 0
-                ? " Run supabase/migrate-writings.sql in the Supabase SQL editor."
-                : ""),
-            true
-          );
+          showStatus(error.message, true);
           return;
         }
         window.location.href = "note.html?slug=" + encodeURIComponent(slug);

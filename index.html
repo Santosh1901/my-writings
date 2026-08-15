@@ -25,6 +25,7 @@
         </a>
         <nav class="site-nav">
           <a href="index.html" aria-current="page">Index</a>
+          <a href="write.html" id="write-link" hidden>Write</a>
         </nav>
       </header>
 
@@ -158,19 +159,49 @@
     <script>
       (async function () {
         const mount = document.getElementById("live-feed");
-        const { data, error } = await Writings.listPublished();
-        if (error || !data || !data.length) return;
-        mount.innerHTML = data
+        const staticFeed = document.getElementById("static-feed");
+        const writeLink = document.getElementById("write-link");
+        const user = await Writings.currentUser();
+        const owner = Writings.isOwner(user);
+        if (owner) writeLink.hidden = false;
+
+        const result = await Writings.listPublished();
+        if (result.error || !result.data || !result.data.length) return;
+        staticFeed.hidden = true;
+        const pinned = result.pinnedSlug || "";
+
+        mount.innerHTML = result.data
           .map(function (note, index) {
             const compact = index === 0 ? "" : " compact";
+            const isPinned = note.slug === pinned;
+            const kicker = isPinned ? "Pinned" : note.kicker || "Note";
+            const tools = owner
+              ? '<div class="owner-tools">' +
+                '<a href="write.html?slug=' +
+                encodeURIComponent(note.slug) +
+                '">Edit</a>' +
+                '<button type="button" data-delete="' +
+                note.id +
+                '" data-slug="' +
+                Writings.escapeHtml(note.slug) +
+                '">Delete</button>' +
+                '<button type="button" data-pin="' +
+                Writings.escapeHtml(note.slug) +
+                '"' +
+                (isPinned ? " disabled" : "") +
+                ">" +
+                (isPinned ? "Pinned" : "Pin") +
+                "</button></div>"
+              : "";
             return (
-              '<a class="feature' +
+              '<article class="feature' +
               compact +
-              '" href="note.html?slug=' +
+              '">' +
+              '<a class="feature-link" href="note.html?slug=' +
               encodeURIComponent(note.slug) +
               '">' +
               '<p class="kicker">' +
-              Writings.escapeHtml(note.kicker || "Note") +
+              Writings.escapeHtml(kicker) +
               "</p>" +
               "<h2>" +
               Writings.escapeHtml(note.title) +
@@ -178,10 +209,38 @@
               "<p>" +
               Writings.escapeHtml(note.excerpt || "") +
               "</p>" +
-              '<span class="continue">Read the note</span></a>'
+              '<span class="continue">Read the note</span></a>' +
+              tools +
+              "</article>"
             );
           })
           .join("");
+
+        mount.addEventListener("click", async function (event) {
+          const del = event.target.closest("[data-delete]");
+          const pin = event.target.closest("[data-pin]");
+          if (del) {
+            event.preventDefault();
+            if (!confirm("Delete this note?")) return;
+            const { error } = await Writings.removeNote(del.getAttribute("data-delete"));
+            if (error) {
+              alert(error.message);
+              return;
+            }
+            const slug = del.getAttribute("data-slug");
+            if (slug === pinned) await Writings.setPinnedSlug("");
+            location.reload();
+          }
+          if (pin) {
+            event.preventDefault();
+            const { error } = await Writings.setPinnedSlug(pin.getAttribute("data-pin"));
+            if (error) {
+              alert(error.message);
+              return;
+            }
+            location.reload();
+          }
+        });
       })();
     </script>
   </body>

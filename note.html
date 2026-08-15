@@ -21,6 +21,7 @@
         </a>
         <nav class="site-nav">
           <a href="index.html">Index</a>
+          <a href="write.html" id="write-link" hidden>Write</a>
         </nav>
       </header>
 
@@ -49,6 +50,16 @@
           return;
         }
         document.title = data.title + " — Santosh";
+        const user = await Writings.currentUser();
+        const owner = Writings.isOwner(user);
+        if (owner) document.getElementById("write-link").hidden = false;
+        const tools = owner
+          ? '<div class="owner-tools">' +
+            '<a href="write.html?slug=' +
+            encodeURIComponent(data.slug) +
+            '">Edit</a>' +
+            '<button type="button" id="delete-note">Delete</button></div>'
+          : "";
         article.innerHTML =
           '<header class="essay-header">' +
           '<p class="kicker">' +
@@ -57,10 +68,23 @@
           "<h1>" +
           Writings.escapeHtml(data.title) +
           "</h1>" +
+          tools +
           "</header>" +
           '<div class="prose">' +
           data.body +
           "</div>";
+        const del = document.getElementById("delete-note");
+        if (del) {
+          del.addEventListener("click", async function () {
+            if (!confirm("Delete this note?")) return;
+            const { error: delError } = await Writings.removeNote(data.id);
+            if (delError) {
+              alert(delError.message);
+              return;
+            }
+            window.location.href = "index.html";
+          });
+        }
       })();
     </script>
   </body>

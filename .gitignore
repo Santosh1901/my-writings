@@ -2,3 +2,4 @@
 .env.local
 .env.*.local
 supabase/_apply_lock.py
+supabase/_seed_notes.py

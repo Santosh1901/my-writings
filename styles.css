@@ -125,6 +125,38 @@ a:focus-visible {
   text-decoration: none;
 }
 
+.feature-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.owner-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.owner-tools a,
+.owner-tools button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.owner-tools button:disabled {
+  text-decoration: none;
+  cursor: default;
+  color: var(--mark);
+}
+
 .feature.compact h2 {
   font-size: clamp(1.4rem, 4vw, 1.85rem);
 }
