@@ -1,31 +1,5 @@
--- Writings notes table for this site.
--- Safe: only creates public.writings.
--- Run once: Supabase Dashboard → SQL Editor → New query → Run
-
-create extension if not exists "pgcrypto";
-
-create table if not exists public.writings (
-  id uuid primary key default gen_random_uuid(),
-  author_id uuid references auth.users(id) on delete set null,
-  slug text not null unique,
-  title text not null,
-  kicker text not null default 'Note',
-  excerpt text not null default '',
-  body text not null,
-  published boolean not null default true,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create index if not exists writings_created_at_idx
-  on public.writings (created_at desc);
-
-alter table public.writings enable row level security;
-
-drop policy if exists "Anyone can read published writings" on public.writings;
-create policy "Anyone can read published writings"
-  on public.writings for select
-  using (published = true);
+-- Lock writes to pvsantosh2019@gmail.com only.
+-- Run in Supabase → SQL Editor if the site cannot apply this itself.
 
 drop policy if exists "Signed-in author can insert writings" on public.writings;
 drop policy if exists "Author can update own writings" on public.writings;

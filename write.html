@@ -33,10 +33,7 @@
       <p class="form-status" id="status" hidden></p>
 
       <form class="auth-form" id="login-form">
-        <p class="lede">
-          This is only for you. Create an account once, then sign in to write.
-          Nobody else can save notes.
-        </p>
+        <p class="lede">Sign in to write. New accounts cannot be created here.</p>
         <label>
           Email
           <input type="email" name="email" required autocomplete="username" />
@@ -50,12 +47,7 @@
             autocomplete="current-password"
           />
         </label>
-        <div class="form-actions">
-          <button type="submit">Sign in</button>
-          <button type="button" class="text-btn" id="create-account">
-            Create account
-          </button>
-        </div>
+        <button type="submit">Sign in</button>
       </form>
 
       <div id="composer" hidden>
@@ -136,26 +128,6 @@
         showStatus("");
         await showSession();
       });
-
-      document
-        .getElementById("create-account")
-        .addEventListener("click", async function () {
-          const sb = Writings.client();
-          showStatus("Creating account…");
-          const { data, error } = await sb.auth.signUp(creds());
-          if (error) {
-            showStatus(error.message, true);
-            return;
-          }
-          if (data.session) {
-            showStatus("");
-            await showSession();
-            return;
-          }
-          showStatus(
-            "Account created. If it asks you to confirm email, turn off Confirm email in Supabase Auth settings, then sign in."
-          );
-        });
 
       document.getElementById("sign-out").addEventListener("click", async function () {
         const sb = Writings.client();
