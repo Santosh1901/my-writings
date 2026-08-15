@@ -1,3 +1,4 @@
 .env
 .env.local
 .env.*.local
+supabase/_apply_lock.py
