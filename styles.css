@@ -118,6 +118,10 @@ a:focus-visible {
   margin-top: 8px;
 }
 
+#static-feed[hidden] {
+  display: none;
+}
+
 .feature {
   display: block;
   padding: 28px 0 32px;

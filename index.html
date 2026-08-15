@@ -168,6 +168,7 @@
         const result = await Writings.listPublished();
         if (result.error || !result.data || !result.data.length) return;
         staticFeed.hidden = true;
+        staticFeed.style.display = "none";
         const pinned = result.pinnedSlug || "";
 
         mount.innerHTML = result.data

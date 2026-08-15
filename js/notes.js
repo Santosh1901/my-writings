@@ -90,18 +90,20 @@
       .from("writings")
       .select("id, slug, title, kicker, excerpt, created_at")
       .eq("published", true)
-      .neq("slug", PIN_SLUG)
       .order("created_at", { ascending: false });
     if (notes.error || !notes.data) return notes;
     var pin = await getPinnedSlug();
+    var data = notes.data.filter(function (note) {
+      return note.slug !== PIN_SLUG && note.kicker !== "Pin";
+    });
     if (pin) {
-      notes.data.sort(function (a, b) {
+      data.sort(function (a, b) {
         if (a.slug === pin) return -1;
         if (b.slug === pin) return 1;
         return 0;
       });
     }
-    return { data: notes.data, error: null, pinnedSlug: pin };
+    return { data: data, error: null, pinnedSlug: pin };
   }
 
   async function getBySlug(slug) {
