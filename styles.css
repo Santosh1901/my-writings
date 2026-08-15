@@ -273,6 +273,12 @@ a:focus-visible {
   gap: 16px;
 }
 
+.auth-form[hidden],
+#composer[hidden],
+.form-status[hidden] {
+  display: none;
+}
+
 .auth-form label,
 #note-form label {
   display: grid;
